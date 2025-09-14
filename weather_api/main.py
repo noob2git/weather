@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 from datetime import datetime
 import pytz
@@ -7,6 +8,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 from adjustText import adjust_text
 import matplotlib.patheffects as path_effects
+import pandas as pd
 
 # ==========================
 # CONFIG
@@ -53,7 +55,6 @@ STATE_CENTROIDS = {
     "Lakshadweep": (10.5667, 72.6417),
     "Puducherry": (11.9416, 79.8083),
 }
-
 
 # ==========================
 # FUNCTIONS
@@ -126,7 +127,7 @@ def plot_heatmap(temp_data: dict, geojson_path: str, out_path: str, timestamp: s
                 centroid.y,
                 label,
                 ha="center",
-                fontsize=5,   # smaller font for full names
+                fontsize=5,
                 color="black",
                 zorder=10
             )
@@ -152,8 +153,7 @@ def plot_heatmap(temp_data: dict, geojson_path: str, out_path: str, timestamp: s
 
     plt.savefig(out_path, dpi=300, bbox_inches="tight")
     print(f"Heatmap saved → {out_path}")
-    plt.show()
-
+    plt.close(fig)
 
 # ==========================
 # MAIN
@@ -169,16 +169,31 @@ def main():
             print(f"{state:<35} {temp:>6} °C")
         except Exception as e:
             print(f"{state:<35} ERROR: {e}")
+            results[state] = math.nan   # ensure state is logged even on failure
 
     out_dir = Path(__file__).resolve().parent.parent / "data"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save raw JSON
+    # Save raw JSON (latest snapshot)
     out_file = out_dir / "current_temps.json"
     out_file.write_text(json.dumps(results, indent=2))
     print(f"\nSaved JSON → {out_file}")
 
-    # Use uploaded India GeoJSON (better accuracy)
+    # Append to CSV history
+    csv_file = out_dir / "weather_history.csv"
+    ist = pytz.timezone("Asia/Kolkata")
+    timestamp = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S")
+
+    row_df = pd.DataFrame([{"timestamp": timestamp, **results}])
+
+    if csv_file.exists():
+        row_df.to_csv(csv_file, mode="a", index=False, header=False)
+    else:
+        row_df.to_csv(csv_file, mode="w", index=False, header=True)
+
+    print(f"Appended weather data → {csv_file}")
+
+    # Use uploaded India GeoJSON
     geojson_file = out_dir / "india.geojson"
     if not geojson_file.exists():
         raise FileNotFoundError("india.geojson not found in data/. Please place it there.")
@@ -186,9 +201,8 @@ def main():
     # Plot heatmap
     heatmap_file = out_dir / "india_heatmap.png"
     ist = pytz.timezone("Asia/Kolkata")
-    timestamp = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S %Z")
-    plot_heatmap(results, str(geojson_file), str(heatmap_file), timestamp)
-
+    timestamp_full = datetime.now(ist).strftime("%Y-%m-%d %H:%M:%S %Z")
+    plot_heatmap(results, str(geojson_file), str(heatmap_file), timestamp_full)
 
 if __name__ == "__main__":
     main()
