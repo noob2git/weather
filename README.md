@@ -2,4 +2,4 @@
 
 Here’s the latest heatmap of weather:
 
-![India Heatmap](docs/assets/india_heatmap.png?v=C6D3E5)
+![India Heatmap](docs/assets/india_heatmap.png?v=C6D63D)
