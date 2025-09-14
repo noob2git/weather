@@ -85,6 +85,11 @@ def plot_heatmap(temp_data: dict, geojson_path: str, out_path: str, timestamp: s
     else:
         raise ValueError(f"Could not find state name column. Available: {india.columns}")
 
+    # 🔑 Fix: normalize "Dadra and Nagar Haveli and Daman and Diu" → "D&D"
+    india["state_name"] = india["state_name"].replace({
+        "Dadra and Nagar Haveli and Daman and Diu": "D&D"
+    })
+
     # Dissolve polygons by state_name (to merge sub-polygons into one)
     india = india.dissolve(by="state_name", as_index=False)
 
@@ -101,12 +106,12 @@ def plot_heatmap(temp_data: dict, geojson_path: str, out_path: str, timestamp: s
         edgecolor="black",
         legend=True,
         legend_kwds={
-    "label": "Temperature (°C)",
-    "orientation": "horizontal",
-    "shrink": 0.5,         # shrink colorbar to 50% of default
-    "pad": 0.02,           # closer to map
-    "aspect": 30           # thinner bar
-},
+            "label": "Temperature (°C)",
+            "orientation": "horizontal",
+            "shrink": 0.5,
+            "pad": 0.02,
+            "aspect": 30
+        },
         missing_kwds={"color": "lightgrey", "label": "No data"}
     )
 
