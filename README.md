@@ -4,4 +4,4 @@ Here’s the latest heatmap of weather:
 
 Feel free to leave feedback/improvements.
 
-![India Heatmap](docs/assets/india_heatmap.png?v=F5C8FD)
+![India Heatmap](docs/assets/india_heatmap.png?v=F5CB56)
